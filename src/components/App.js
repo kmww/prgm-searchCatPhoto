@@ -1,4 +1,6 @@
 import { request } from "../apis/api.js";
+import { getItem, setItem } from "../utils/storage.js";
+import debounce from "../utils/debounce.js";
 import Header from "./Header.js";
 import SuggestKeywords from "./SuggestKeywords.js";
 import SearchResults from "./SearchResults.js";
@@ -10,6 +12,8 @@ export default function App({ $target }) {
     catImages: [],
   };
 
+  this.cache = getItem("keywords_cache", {});
+
   this.setState = (nextState) => {
     this.state = nextState;
 
@@ -17,7 +21,6 @@ export default function App({ $target }) {
       header.setState({
         keyword: this.state.keyword,
       });
-      console.log(keyword);
     }
 
     suggestKeywords.setState({
@@ -36,16 +39,23 @@ export default function App({ $target }) {
     initialState: {
       keyword: this.state.keyword,
     },
-    onKeywordInput: async (keyword) => {
+    onKeywordInput: debounce(async (keyword) => {
       if (keyword.trim().length > 1) {
-        const keywords = await request(`/keywords?q=${keyword}`);
+        let keywords = null;
 
+        if (this.cache[keyword]) {
+          keywords = this.cache[keyword];
+        } else {
+          keywords = await request(`/keywords?q=${keyword}`);
+          this.cache[keyword] = keywords;
+          setItem("keywords_cache", this.cache);
+        }
         this.setState({
           ...this.state,
           keywords,
         });
       }
-    },
+    }, 300),
     onEnter: () => {
       fetchCatsImage();
     },
@@ -74,7 +84,6 @@ export default function App({ $target }) {
 
   const fetchCatsImage = async () => {
     const { data } = await request(`/search?q=${this.state.keyword}`);
-    console.log(data);
 
     this.setState({
       ...this.state,

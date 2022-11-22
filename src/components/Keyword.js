@@ -5,12 +5,9 @@ export default function Keyword({ $target, initialState, onKeywordInput, onEnter
   $target.appendChild($keyword);
 
   this.state = initialState;
-
   this.setState = (nextState) => {
-    if (this.state !== nextState) {
-      this.state = nextState;
-      $keyword.value = this.state.value;
-    }
+    this.state = nextState;
+    $keyword.value = this.state.value;
   };
 
   $keyword.addEventListener("keyup", (e) => {
