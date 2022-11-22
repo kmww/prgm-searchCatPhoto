@@ -4,18 +4,27 @@ import SuggestKeywords from "./SuggestKeywords.js";
 
 export default function App({ $target }) {
   this.state = {
+    keyword: "",
     keywords: [],
   };
 
   this.setState = (nextState) => {
     if (this.state !== nextState) {
       this.state = nextState;
-      suggestKeywords.setState(this.state.keywords);
+      header.setState({
+        keyword: this.state.keyword,
+      });
+      suggestKeywords.setState({
+        keywords: this.state.keywords,
+      });
     }
   };
 
   const header = new Header({
     $target,
+    initialState: {
+      keyword: this.state.keyword,
+    },
     onKeywordInput: async (keyword) => {
       if (keyword.trim().length > 1) {
         const keywords = await request(`/keywords?q=${keyword}`);
@@ -30,6 +39,15 @@ export default function App({ $target }) {
 
   const suggestKeywords = new SuggestKeywords({
     $target,
-    initialState: this.state.keywords,
+    initialState: {
+      keywords: this.state.keywords,
+      cursor: -1,
+    },
+    onKeywordSelect: (keyword) => {
+      this.setState({
+        ...this.state,
+        keyword,
+      });
+    },
   });
 }
